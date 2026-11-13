@@ -1,15 +1,17 @@
-# Exness cent trial: tradingbot
+# Aurum EMA trial
 
-Reserved magic: **26111305**. Only `exness_trial.py` is the guarded trial entry point. Original entry points are not approved for this shared-account trial.
+Magic number: **26111305**. The only approved live entry point is `exness_trial.py`, which uses the shared package in the sibling `Monn` checkout.
 
-The shared package and tracker live in the sibling `Monn/exness_arena` directory. Clone these forks as sibling folders. The launcher sets the repo identity before importing trading modules. Runtime account pins, initial equity, risk budgets, journal and credentials are excluded from Git.
+## Strategy profile
 
-Status: Aurum fitted artifact and USC-aware instrument valuation not validated.
+Original `aurum.strategies.trend.EMACrossover`: default 32/128 spans and volatility normalization, validated native artifact per symbol, M15. The rule is non-trainable; the native fit marks it ready without estimating a model. Enter only when absolute forecast is at least 0.25, with 2 ATR stop and 4 ATR target. MT5 bid bars are converted to mid for the Aurum signal. This is an explicit trial adapter, not the full portfolio, walk-forward selection, native OMS or Claude desk. No statistically demonstrated edge is claimed.
 
-Guarded strategy adapters use the original strategy classes: Monn MACross (10/20 SMA, 100-SMA and candle filters), or MT5-Python-Trading CrossOverStrategy (20/50 SMA). Both use closed M15 bars on EURUSDc and XAUUSDc. Monn retains its configured 0.25% price stop; the crossover adapter adds a mandatory 2-ATR stop and 2R target because the original multi-symbol runner sends no stop. These adapters are distinct experiment configurations, not an unmodified upstream performance claim.
+## Shared execution policy
 
-Shared limits: fixed stop-risk cap of 0.10% of starting account equity per ready bot; reserve 10% for execution drift; one position per bot; total stop-risk cap 0.20%; per-bot cumulative loss budget 0.50%; account-wide equity decline gate 1%; at most 10 entries per bot; maximum 0.10 cent lots per order. Skip if minimum volume exceeds budget. No pending orders, stop removal, stop widening, or cross-bot position changes. No upward rounding or account switching. Missing account state, stale quotes/tracker, and unknown order results block new entries.
+Every live proposal goes through the same shared `Monn/exness_arena/guard.py`. Current fixed risk cap is 3.50 USC per position, 7.00 USC combined open stop-risk, 5.2444 USC cumulative booked loss budget per repo, and a 1% account-equity drawdown entry halt. A 10% execution buffer is reserved; volume never rounds up and remains capped at 0.01 cent lots. Missing state, stale tracker/quotes and ambiguous results fail closed. A first buy and first sell may coexist. Further same-direction entries require every existing position in that direction to be positive after swap and known opening fees. There is no numeric position-count or lifetime-entry cap. New opposite signals do not liquidate existing positions; server-side SL/TP remain active. Existing manual positions are excluded from management and per-repo results. Gaps can exceed estimated stop risk. Adding a repo never raises the shared budget or resets the baseline, history or loss counters.
 
-The account-wide gate includes external position P&L and is an entry halt, not a guaranteed loss ceiling or automatic liquidation. Stop gaps/slippage can exceed estimated risk. Existing positions are excluded from bot results. Equal risk caps do not guarantee equal exposure or trade counts. Sampled drawdown is measured every 10 seconds. No API costs are incurred by the two initial rule-based adapters.
+## Validation and operations
 
-From the workspace parent, use the isolated Python environment and the scripts in `Monn/exness_arena`. Dashboard: http://127.0.0.1:8765 . Run `python -m exness_arena.control pause` with `Monn` on PYTHONPATH to stop new entries and exit runners without closing positions. Tracker remains read-only and continues reporting. There is no automatic restart or automatic halt reset. Keep Windows and MT5 running.
+`exness_trial.py --preflight` loads the original strategy and evaluates current broker data through a no-order gateway. Aurum artifact hashes are verified. The shared tests exercise ownership, sizing, hedging, profitable additions, failure handling and each new adapter. Preflight proves plumbing, not profitability. All rule-based trial profiles incur zero AI API costs.
+
+Account pins, runtime settings, artifacts and the SQLite deal journal stay local in `Monn/.exness-arena/`, excluded from Git. The authoritative enabled repo list is `settings.json.enabled_bots`. `Monn/restart_exness_trial.ps1` checks and restarts this list while preserving open positions and history. Dashboard: http://127.0.0.1:8765 . Stop new entries with `Monn/stop_exness_trial.ps1`.
