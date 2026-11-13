@@ -95,3 +95,8 @@ Thumbs.db
 # legacy v1 training outputs
 train/ppo_*.zip
 train/dreamer*/
+
+# Local cent trial account state and temporary test files
+.exness-arena/
+.arena-test-*/
+__pycache__/

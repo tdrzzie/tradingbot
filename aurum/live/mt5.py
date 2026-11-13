@@ -152,6 +152,8 @@ class MT5UnavailableError(BrokerError):
 def import_mt5() -> Any:
     """Import the ``MetaTrader5`` package (or a test double registered in ``sys.modules``)."""
     try:
+        if os.environ.get("EXNESS_BOT_ID"):
+            return importlib.import_module("exness_arena.mt5")
         return importlib.import_module("MetaTrader5")
     except ImportError as exc:
         hint = ("the MetaTrader5 package is only available on Windows (it drives a local MT5 "

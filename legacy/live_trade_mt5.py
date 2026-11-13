@@ -2,6 +2,8 @@ import time
 import numpy as np
 import pandas as pd
 import MetaTrader5 as mt5
+if __import__("os").environ.get("EXNESS_BOT_ID"):
+    from exness_arena import mt5
 from datetime import datetime, timedelta
 from stable_baselines3 import PPO
 
