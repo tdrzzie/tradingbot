@@ -471,6 +471,17 @@ class DonchianBreakout(Strategy):
 
     def positions(self, bars: pd.DataFrame) -> np.ndarray:
         """Raw position state in {-1, 0, +1} for every bar (causal state machine)."""
+        return self._position_and_stop(bars)[0]
+
+    def stop_levels(self, bars: pd.DataFrame) -> np.ndarray:
+        """Original entry-anchored stop per bar; NaN while flat or without a stop.
+
+        Exposes the existing state machine's levels without changing its forecasts.
+        Channel exits remain close-based signal exits, not fixed take-profit prices.
+        """
+        return self._position_and_stop(bars)[1]
+
+    def _position_and_stop(self, bars: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
         p = self.params
         high = bars["high"].astype(float)
         low = bars["low"].astype(float)
@@ -482,6 +493,7 @@ class DonchianBreakout(Strategy):
         n_atr = atr(bars, p["atr_n"]).tolist()
         k = float(p["stop_atr"]) if p["stop_atr"] is not None else math.inf
         out = [0.0] * len(close)
+        stops = [math.nan] * len(close)
         state = 0
         stop = math.nan
         for t, c in enumerate(close):
@@ -499,7 +511,8 @@ class DonchianBreakout(Strategy):
                 elif c < lower[t]:
                     state, stop = -1, c + k * a
             out[t] = float(state)
-        return np.asarray(out)
+            stops[t] = stop if state else math.nan
+        return np.asarray(out), np.asarray(stops)
 
     def generate(self, md: MarketData, features: pd.DataFrame | None = None) -> pd.Series:
         bars = md.bars
